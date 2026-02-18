@@ -29,7 +29,7 @@ VALIDATE(){
 dnf module disable nodejs -y &>> $LOGS_FILE
 VALIDATE $? "Disabling NodeJs Default version"
 
-dnf module enable nodejs:20 -y &?? $LOGS_FILE
+dnf module enable nodejs:20 -y &>> $LOGS_FILE
 VALIDATE $? "Enabling NodeJS 20"
 
 dnf install nodejs -y &>> $LOGS_FILE
