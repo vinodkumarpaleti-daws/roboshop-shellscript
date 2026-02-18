@@ -1,15 +1,14 @@
 #!/bin/bash
-R="\e[31m"  # It will print in Red Color
-G="\e[32m"  # It will print in Green Color
-Y="\e[33m"  # It will print in Yellow Color
-B="\e[34m"  # It will print in Blue Color
-P="\e[35m"  # It will print in Pink Color
-N="\e[0m"   # It will print in Normal Color
 
 USERID=$(id -u)
-LOGS_FOLDER="/var/logs/roboshop-shellscript/"
-LOGS_FILE="$LOGS_FOLDER/$0.logs"
+LOGS_FOLDER="/var/log/shell-roboshop"
+LOGS_FILE="$LOGS_FOLDER/$0.log"
+R="\e[31m"
+G="\e[32m"
+Y="\e[33m"
+N="\e[0m"
 SCRIPT_DIR=$PWD
+MONGODB_HOST=mongodb.jcglobalit.online
 
 if [ $USERID -ne 0 ]; then
     echo -e "$R Please run this script with root user access $N" | tee -a $LOGS_FILE
@@ -27,56 +26,53 @@ VALIDATE(){
     fi
 }
 
-dnf module disable nodejs -y &>> $LOGS_FILE
-VALIDATE $? "Disabling NodeJs Default version"
+dnf module disable nodejs -y &>>$LOGS_FILE
+VALIDATE $? "Disabling NodeJS Default version"
 
-dnf module enable nodejs:20 -y &>> $LOGS_FILE
+dnf module enable nodejs:20 -y &>>$LOGS_FILE
 VALIDATE $? "Enabling NodeJS 20"
 
-dnf install nodejs -y &>> $LOGS_FILE
-VALIDATE $? "Installing Nodejs"
+dnf install nodejs -y &>>$LOGS_FILE
+VALIDATE $? "Install NodeJS"
 
-id roboshop &>> $LOGS_FILE
-
+id roboshop &>>$LOGS_FILE
 if [ $? -ne 0 ]; then
-   useradd --system --home /app --shell /sbin/nologin --comment "roboshop system user" roboshop
-   VALIDATE $? "Creating system user"
+    useradd --system --home /app --shell /sbin/nologin --comment "roboshop system user" roboshop &>>$LOGS_FILE
+    VALIDATE $? "Creating system user"
 else
-    echo -e "roboshop user already exist...$Y skipping $N"
+    echo -e "Roboshop user already exist ... $Y SKIPPING $N"
 fi
 
-mkdir -p /app &>> $LOGS_FILE
-VALIDATE $? "Creating App directory"
+mkdir -p /app
+VALIDATE $? "Creating app directory"
 
-curl -o /tmp/catalogue.zip https://roboshop-artifacts.s3.amazonaws.com/catalogue-v3.zip  &>> $LOGS_FILE
+curl -o /tmp/catalogue.zip https://roboshop-artifacts.s3.amazonaws.com/catalogue-v3.zip  &>>$LOGS_FILE
 VALIDATE $? "Downloading catalogue code"
 
-cd /app &>>$LOGS_FILE
-VALIDATE $? "Moving to App directory"
+cd /app
+VALIDATE $? "Moving to app directory"
+
 rm -rf /app/*
-VALIDATE $? "Removing existing content in the App directory"
+VALIDATE $? "Removing existing code"
 
-unzip /tmp/catalogue.zip &>> $LOGS_FILE
-VALIDATE $? "Unziping catalogue code"
+unzip /tmp/catalogue.zip &>>$LOGS_FILE
+VALIDATE $? "Uzip catalogue code"
 
-npm install &>> $LOGS_FILE
-VALIDATE $? "Installing npm dependencies"
-cp $SCRIPT_DIR/catalogue.service /etc/systemd/system/catalogue.service  &>> $LOGS_FILE
-VALIDATE $? "Creating systemctl service"
+npm install  &>>$LOGS_FILE
+VALIDATE $? "Installing dependencies"
 
-systemctl daemon-reload &>> $LOGS_FILE
-VALIDATE $? "Daemon reload"
+cp $SCRIPT_DIR/catalogue.service /etc/systemd/system/catalogue.service
+VALIDATE $? "Created systemctl service"
 
-systemctl enable catalogue &>> $LOGS_FILE
-VALIDATE $? "Enabling catalogue"
-
-systemctl start catalogue &>> $LOGS_FILE
-VALIDATE $? "Starting catalogue service"
+systemctl daemon-reload
+systemctl enable catalogue  &>>$LOGS_FILE
+systemctl start catalogue
+VALIDATE $? "Starting and enabling catalogue"
 
 cp $SCRIPT_DIR/mongo.repo /etc/yum.repos.d/mongo.repo
 dnf install mongodb-mongosh -y &>>$LOGS_FILE
 
-INDEX=$(mongosh --host $MONGODB_HOST --quiet  --eval 'db.getMongo().getDBNames().indexOf("catalogue")')  # This will check if the products are loaded or not.
+INDEX=$(mongosh --host $MONGODB_HOST --quiet  --eval 'db.getMongo().getDBNames().indexOf("catalogue")')
 
 if [ $INDEX -le 0 ]; then
     mongosh --host $MONGODB_HOST </app/db/master-data.js
@@ -85,6 +81,5 @@ else
     echo -e "Products already loaded ... $Y SKIPPING $N"
 fi
 
-systemctl restart catalogue &>>$LOGS_FILE
+systemctl restart catalogue
 VALIDATE $? "Restarting catalogue"
-

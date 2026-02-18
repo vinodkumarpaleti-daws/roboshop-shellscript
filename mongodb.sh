@@ -1,14 +1,12 @@
 #!/bin/bash
-R="\e[31m"  # It will print in Red Color
-G="\e[32m"  # It will print in Green Color
-Y="\e[33m"  # It will print in Yellow Color
-B="\e[34m"  # It will print in Blue Color
-P="\e[35m"  # It will print in Pink Color
-N="\e[0m"   # It will print in Normal Color
 
 USERID=$(id -u)
-LOGS_FOLDER="/var/logs/roboshop-shellscript/"
-LOGS_FILE="$LOGS_FOLDER/$0.logs"
+LOGS_FOLDER="/var/log/shell-roboshop"
+LOGS_FILE="$LOGS_FOLDER/$0.log"
+R="\e[31m"
+G="\e[32m"
+Y="\e[33m"
+N="\e[0m"
 
 if [ $USERID -ne 0 ]; then
     echo -e "$R Please run this script with root user access $N" | tee -a $LOGS_FILE
@@ -43,6 +41,3 @@ VALIDATE $? "Allowing remote connections"
 
 systemctl restart mongod
 VALIDATE $? "Restarted MongoDB"
-
-
-
