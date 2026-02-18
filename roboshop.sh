@@ -7,7 +7,7 @@ DOMAIN_NAME="jcglobalit.online"
 
 for instance in $@
 do
-    INSTANCE_ID=$( aws ec2 run-instances \    # Here it creates the Instances passing by CLI
+    INSTANCE_ID=$( aws ec2 run-instances \
     --image-id $AMI_ID \
     --instance-type "t3.micro" \
     --security-group-ids $SG_ID \
@@ -35,7 +35,7 @@ do
 
     echo "IP Address: $IP"
 
-    aws route53 change-resource-record-sets \   # Here it will create the route 53 records.
+    aws route53 change-resource-record-sets \
     --hosted-zone-id $ZONE_ID \
     --change-batch '
     {
