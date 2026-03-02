@@ -3,6 +3,8 @@
 USERID=$(id -u)
 LOGS_FOLDER="/var/logs/roboshop-shellscript"
 LOGS_FILE="$LOGS_FOLDER/$0.log"
+SCRIPT_DIR=$PWD
+MONGODB_HOST=mongodb.jcglobalit.online
 
 # Color Codes
 
@@ -38,27 +40,27 @@ VALIDATE(){
   fi
 }
 
-dnf module disable redis -y &>>$LOGS_FILE
+dnf module disable nginx -y &>>$LOGS_FILE
+dnf module enable nginx:1.24 -y &>>$LOGS_FILE
+dnf install nginx -y &>>$LOGS_FILE
+VALIDATE $? "Installing Nginx"
 
-VALIDATE $? "Disabling redis"
+systemctl enable nginx  &>>$LOGS_FILE
+systemctl start nginx
+VALIDATE $? "Enabled and started nginx"
 
-dnf module enable redis:7 -y &>>$LOGS_FILE
+rm -rf /usr/share/nginx/html/*
+VALIDATE $? "Remove default content"
 
-VALIDATE $? "Enabling redis 7"
+curl -o /tmp/frontend.zip https://roboshop-artifacts.s3.amazonaws.com/frontend-v3.zip &>>$LOGS_FILE
+cd /usr/share/nginx/html
+unzip /tmp/frontend.zip &>>$LOGS_FILE
+VALIDATE $? "Downloaded and unzipped frontend"
 
-dnf install redis -y &>>$LOGS_FILE
+rm -rf /etc/nginx/nginx.conf
 
-VALIDATE $? "Installing Redis"
+cp $SCRIPT_DIR/nginx.conf /etc/nginx/nginx.conf
+VALIDATE $? "Copied our nginx conf file"
 
-# update the redis.conf
-# Replacing the 127.0.0.1 to 0.0.0.0 in /etc/redis/redis.conf using ' sed -i ' command
-# Replacing the protected-mode from yes to no in in /etc/redis/redis.conf 'sed -i'
-
-sed -i -e 's/127.0.0.1/0.0.0.0/g' -e '/protected-mode/ c protected-mode no' /etc/redis/redis.conf
-VALIDATE $? "Allowing Remote connections"
-
-systemctl enable redis &>>$LOGS_FILE
-VALIDATE $? "Redis enabling success"
-
-systemctl start redis &>>$LOGS_FILE
-VALIDATE $? "Start the redis"
+systemctl restart nginx
+VALIDATE $? "Restarted Nginx"

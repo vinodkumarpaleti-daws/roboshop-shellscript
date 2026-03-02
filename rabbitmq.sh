@@ -3,6 +3,8 @@
 USERID=$(id -u)
 LOGS_FOLDER="/var/logs/roboshop-shellscript"
 LOGS_FILE="$LOGS_FOLDER/$0.log"
+SCRIPT_DIR=$PWD
+MONGODB_HOST=mysql.jcglobalit.online
 
 # Color Codes
 
@@ -38,27 +40,16 @@ VALIDATE(){
   fi
 }
 
-dnf module disable redis -y &>>$LOGS_FILE
+cp $SCRIPT_DIR/rabbitmq.repo /etc/yum.repos.d/rabbitmq.repo
+VALIDATE $? "Added RabbitMQ repo"
 
-VALIDATE $? "Disabling redis"
+dnf install rabbitmq-server -y &>>$LOGS_FILE
+VALIDATE $? "Installing RabbitMQ server"
 
-dnf module enable redis:7 -y &>>$LOGS_FILE
+systemctl enable rabbitmq-server &>>$LOGS_FILE
+systemctl start rabbitmq-server
+VALIDATE $? "Enabled and started rabbitmq"
 
-VALIDATE $? "Enabling redis 7"
-
-dnf install redis -y &>>$LOGS_FILE
-
-VALIDATE $? "Installing Redis"
-
-# update the redis.conf
-# Replacing the 127.0.0.1 to 0.0.0.0 in /etc/redis/redis.conf using ' sed -i ' command
-# Replacing the protected-mode from yes to no in in /etc/redis/redis.conf 'sed -i'
-
-sed -i -e 's/127.0.0.1/0.0.0.0/g' -e '/protected-mode/ c protected-mode no' /etc/redis/redis.conf
-VALIDATE $? "Allowing Remote connections"
-
-systemctl enable redis &>>$LOGS_FILE
-VALIDATE $? "Redis enabling success"
-
-systemctl start redis &>>$LOGS_FILE
-VALIDATE $? "Start the redis"
+rabbitmqctl add_user roboshop roboshop123 &>>$LOGS_FILE
+rabbitmqctl set_permissions -p / roboshop ".*" ".*" ".*" &>>$LOGS_FILE
+VALIDATE $? "created user and given permissions"
