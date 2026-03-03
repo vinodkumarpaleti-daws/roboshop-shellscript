@@ -34,9 +34,9 @@ mkdir -p $LOGS_FOLDER
 
 VALIDATE(){
   if [ $1 -ne 0 ]; then
-    echo "$2.....$R FAILURE $N" | tee -a $LOGS_FILE
+    echo -e "$2.....$R FAILURE $N" | tee -a $LOGS_FILE
   else
-    echo "$2.....$G SUCCESS $N" | tee -a $LOGS_FILE
+    echo -e "$2.....$G SUCCESS $N" | tee -a $LOGS_FILE
   fi
 }
 # disabling nodejs module
@@ -59,9 +59,6 @@ if [ $? -ne 0 ]; then
 else
     echo -e "Roboshop user already exist ... $Y SKIPPING $N"
 fi
-
-mkdir -p /app
-VALIDATE $? "Creating app directory"
 
 mkdir -p /app
 VALIDATE $? "Creating app directory"
