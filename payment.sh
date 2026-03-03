@@ -39,9 +39,8 @@ VALIDATE(){
     echo -e "$2.....$G SUCCESS $N" | tee -a $LOGS_FILE
   fi
 }
-
-dnf install maven -y &>>$LOGS_FILE
-VALIDATE $? "Installing Maven"
+dnf install python3 gcc python3-devel -y &>>$LOGS_FILE
+VALIDATE $? "Installing Python"
 
 id roboshop &>>$LOGS_FILE
 if [ $? -ne 0 ]; then
